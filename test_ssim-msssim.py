@@ -1,4 +1,4 @@
-from pytorch_msssim import ssim, ms_ssim, SSIM, MS_SSIM
+from ssim import ssim, ms_ssim
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 import torch
 import torchvision.transforms as transforms
@@ -8,7 +8,7 @@ import pathlib
 parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
 parser.add_argument('--batch-size', type=int, default=256,
                     help='Batch size to use')
-parser.add_argument('--num-workers', type=int, default=8,
+parser.add_argument('--num-workers', type=int, default=2,
                     help='Number of processes to use for data loading')
 parser.add_argument('--device', type=str, default=None,
                     help='Device to use. Like cuda, cuda:0 or cpu')
@@ -84,7 +84,6 @@ def calculte_ssim_msssim(XData, YData, batch_size=256, device='cpu', num_workers
 
     ssim_vals = []
     msssim_vals = []
-    start_idx = 0
     for Xbatch, Ybatch in zip(tqdm(Xdataloader), tqdm(Ydataloader)):
         Xbatch = Xbatch.to(device)
         Ybatch = Ybatch.to(device)
@@ -98,10 +97,10 @@ def calculte_ssim_msssim(XData, YData, batch_size=256, device='cpu', num_workers
 def get_MSSSIM_SSIM(X, Y):
     # X: (N,3,H,W) a batch of non-negative RGB images (0~255)
     # Y: (N,3,H,W)
-    win_size = 3
+    win_size = 7
     # calculate ssim & ms-ssim for each image
-    ssim_val = ssim(X, Y, data_range=255, size_average=False, win_size=win_size)  # return (N,)
-    ms_ssim_val = ms_ssim(X, Y, data_range=255, size_average=False, win_size=win_size)  # (N,)
+    ssim_val = ssim(X, Y, data_range=255, size_average=True, win_size=win_size)  # return (N,)
+    ms_ssim_val = ms_ssim(X, Y, data_range=255, size_average=True, win_size=win_size)  # (N,)
 
     # set 'size_average=True' to get a scalar value as loss. see tests/tests_loss.py for more details
     ssim_loss = 1 - ssim(X, Y, data_range=255, size_average=True, win_size=win_size)  # return a scalar
