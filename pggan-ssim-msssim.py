@@ -106,7 +106,7 @@ def calculte_ssim_msssim(XData, YData, batch_size=256, device='cpu', num_workers
                                               num_workers=2)
 
     for Xbatch, Ybatch in zip(Xdataloader, cycle(Ydataloader)):
-        
+
 
     sums = 0
     # for Xbatch, Ybatch in zip(tqdm(Xdataloader), tqdm(Ydataloader)):
