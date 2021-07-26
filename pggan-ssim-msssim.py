@@ -64,6 +64,7 @@ class ImagePathDataset(torch.utils.data.Dataset):
         if self.transforms is not None:
             img = self.transforms(img)
         return img
+from itertools import cycle
 
 
 def calculte_ssim_msssim(XData, YData, batch_size=256, device='cpu', num_workers=8):
@@ -97,16 +98,18 @@ def calculte_ssim_msssim(XData, YData, batch_size=256, device='cpu', num_workers
                                               batch_size=batch_size,
                                               shuffle=False,
                                               drop_last=False,
-                                              num_workers=num_workers)
+                                              num_workers=2)
     Ydataloader = torch.utils.data.DataLoader(Ydataset,
                                               batch_size=batch_size,
                                               shuffle=False,
                                               drop_last=False,
-                                              num_workers=num_workers)
+                                              num_workers=2)
 
-    start_idx = 0
+    for Xbatch, Ybatch in zip(Xdataloader, cycle(Ydataloader)):
+        
+
     sums = 0
-    for Xbatch, Ybatch in zip(tqdm(Xdataloader), tqdm(Ydataloader)):
+    # for Xbatch, Ybatch in zip(tqdm(Xdataloader), tqdm(Ydataloader)):
         num_pairs = len(Xbatch) // 2
         Xbatch = Xbatch.to(device)
         Ybatch = Ybatch.to(device)
