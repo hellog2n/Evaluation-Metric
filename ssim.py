@@ -4,7 +4,7 @@ import warnings
 
 import torch
 import torch.nn.functional as F
-
+import math
 
 def _fspecial_gauss_1d(size, sigma):
     r"""Create 1-D gauss kernel
@@ -54,7 +54,7 @@ def gaussian_filter(input, win):
     return out
 
 
-def _ssim(X, Y, data_range, win, size_average=True, K=(0.01, 0.03)):
+def _ssim(X, Y, data_range, win, size_average=True, K=(0.01, 0.03), parameter = (1, 1, 1), expSame = True):
 
     r""" Calculate ssim index for X and Y
 
@@ -84,12 +84,25 @@ def _ssim(X, Y, data_range, win, size_average=True, K=(0.01, 0.03)):
     mu2_sq = mu2.pow(2)
     mu1_mu2 = mu1 * mu2
 
+
     sigma1_sq = compensation * (gaussian_filter(X * X, win) - mu1_sq)
     sigma2_sq = compensation * (gaussian_filter(Y * Y, win) - mu2_sq)
     sigma12 = compensation * (gaussian_filter(X * Y, win) - mu1_mu2)
 
-    cs_map = (2 * sigma12 + C2) / (sigma1_sq + sigma2_sq + C2)  # set alpha=beta=gamma=1
-    ssim_map = ((2 * mu1_mu2 + C1) / (mu1_sq + mu2_sq + C1)) * cs_map
+    if expSame == True:
+        cs_map = (2 * sigma12 + C2) / (sigma1_sq + sigma2_sq + C2)  # set alpha=beta=gamma=1
+        ssim_map = ((2 * mu1_mu2 + C1) / (mu1_sq + mu2_sq + C1)) * cs_map
+    else:
+        alpha, beta, gamma = parameter
+        sigma1 = math.sqrt(sigma1_sq)
+        sigma2 = math.sqrt(sigma2_sq)
+        luminance = ((2*mu1*mu2) + C1)/(mu1_sq + mu2_sq + C1)
+        constant = ((2*sigma1*sigma2 + C2)/(sigma1_sq + sigma2_sq + C2))
+        C3 = C2 / 2.0
+        structure = ((sigma12 + C3)/(sigma1*sigma2 + C3))
+
+        ssim_map = (luminance**alpha) * (constant**beta) * (structure**gamma)
+        cs_map = constant * structure
 
     ssim_per_channel = torch.flatten(ssim_map, 2).mean(-1)
     cs = torch.flatten(cs_map, 2).mean(-1)
@@ -156,7 +169,7 @@ def ssim(
 
 
 def ms_ssim(
-    X, Y, data_range=255, size_average=True, win_size=11, win_sigma=1.5, win=None, weights=None, K=(0.01, 0.03)
+    X, Y, data_range=255, size_average=True, win_size=7, win_sigma=1.5, win=None, weights=None, K=(0.01, 0.03), setting=False
 ):
 
     r""" interface of ms-ssim
@@ -201,8 +214,17 @@ def ms_ssim(
     #    2 ** 4
     #), "Image size should be larger than %d due to the 4 downsamplings in ms-ssim" % ((win_size - 1) * (2 ** 4))
 
-    if weights is None:
-        weights = [0.0448, 0.2856, 0.3001, 0.2363, 0.1333]
+    if setting == True:
+        if X.shape[-1] == 32:
+            print('Image Size is ', X.shape[-2], 'X', X.shape[-1])
+            weights = [0.0448, 0.2856, 0.1333]
+        elif X.shape[-1] == 64:
+            print('Image Size is ', X.shape[-2], 'X', X.shape[-1])
+            weights = [0.0448, 0.2856, 0.3001, 0.1333]
+
+    else:
+        if weights is None:
+            weights = [0.0448, 0.2856, 0.3001, 0.2363, 0.1333]
     weights = torch.FloatTensor(weights).to(X.device, dtype=X.dtype)
 
     if win is None:
@@ -212,6 +234,11 @@ def ms_ssim(
     levels = weights.shape[0]
     mcs = []
     for i in range(levels):
+        if i == 3:
+            if win is None:
+                win_size = 5
+                win = _fspecial_gauss_1d(win_size, win_sigma)
+                win = win.repeat([X.shape[1]] + [1] * (len(X.shape) - 1))
         ssim_per_channel, cs = _ssim(X, Y, win=win, data_range=data_range, size_average=False, K=K)
 
         if i < levels - 1:
