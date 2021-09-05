@@ -1,11 +1,4 @@
 
-from prdc import compute_prdc
-# pred_from_image_folders.py
-
-# coding=utf-8
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import argparse
 import os
@@ -37,10 +30,6 @@ parser.add_argument('--ref_dir', type=str, required=True,
 parser.add_argument('--eval_dirs', type=str, nargs='+', required=True,
                     help='directory or directories containing images to be '
                          'evaluated')
-
-# 평가하려는 이미지가 포함되어 있는 Directory Name (필수), nargs가 +인 경우, 1개 이상의 값을 전부 받아들인다.  *인 경우, 0개 이상의 값을 전부 받아들인다.
-parser.add_argument('--near_k', type=int,
-                    help='use nearest k')
 # store_false에 인자를 적으면 해당 인자에 Flase 값이 저장된다.  적지 않으면 True값이 나옴.
 parser.add_argument('--silent', dest='verbose', action='store_false',
                     help='disable logging output')
@@ -93,7 +82,8 @@ def load_images_from_dir(directory, types=('png', 'jpg', 'bmp', 'gif')):
                                              num_workers=8)
     print('dataloader', len(dataloader))
     return dataloader
-
+import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
 
 if __name__ == '__main__':
     device = torch.device('cuda' if (torch.cuda.is_available()) else 'cpu')
@@ -120,15 +110,32 @@ if __name__ == '__main__':
             directory, device)
         eval_embeddingsLists.append(eval_embeddings)
         if args.verbose:
-            print('computing PRDC')
-        print('Directory PRDC: ', directory, compute_prdc(real_features=real_embeddings,
-                       fake_features=eval_embeddings,
-                       nearest_k=nearest_k))
+            print('finish embedding')
+
 
     if args.verbose:
         print('plotting results')
 
+    embeddings = real_embeddings + eval_embeddings
+    labels = ['real', 'fake']
+    tsne = TSNE(n_components=2).fit_transform(embeddings)
 
+    tsne_df = pd.DataFrame({'x': tsne[:, 0], 'y': tsne[:, 1], 'classes': labels})
+
+    plt.figure(figsize=(16, 10))
+    sns.scatterplot(
+        x='x', y='y',
+        hue='classes',
+        palette=sns.color_palette("Set1", 10),
+        data=tsne_df,
+        legend="full",
+        alpha=0.4
+    )
+
+    plt.title("tSNE")
+
+    plt.savefig('TSNE.png', bbox_inches='tight')
+    plt.show()
 
 
 
