@@ -1,5 +1,4 @@
 
-
 import argparse
 import os
 import inception
@@ -7,6 +6,8 @@ import torchvision.transforms as transforms
 import pathlib
 import torch
 from PIL import Image
+import numpy as np
+import seaborn as sns
 import pandas as pd
 IMAGE_EXTENSIONS = {'bmp', 'jpg', 'jpeg', 'pgm', 'png', 'ppm',
                     'tif', 'tiff', 'webp'}
@@ -115,9 +116,16 @@ if __name__ == '__main__':
 
     if args.verbose:
         print('plotting results')
+    print(type(real_embeddings))
+    print(real_embeddings.shape[0])
+    print(eval_embeddings.shape[0])
 
-    embeddings = real_embeddings + eval_embeddings
-    labels = ['real', 'fake']
+    embeddings = np.concatenate((real_embeddings, eval_embeddings), axis=0)
+    labels = ['real'] * real_embeddings.shape[0]
+    labels = labels + ['fake'] * eval_embeddings.shape[0]
+
+    print(embeddings.shape)
+    print(len(labels))
     tsne = TSNE(n_components=2).fit_transform(embeddings)
 
     tsne_df = pd.DataFrame({'x': tsne[:, 0], 'y': tsne[:, 1], 'classes': labels})
@@ -126,13 +134,13 @@ if __name__ == '__main__':
     sns.scatterplot(
         x='x', y='y',
         hue='classes',
-        palette=sns.color_palette("Set1", 10),
+        palette=sns.color_palette("Set1", 2),
         data=tsne_df,
         legend="full",
         alpha=0.4
     )
 
-    plt.title("tSNE")
+    plt.title("tSNE-mnist")
 
     plt.savefig('TSNE.png', bbox_inches='tight')
     plt.show()
