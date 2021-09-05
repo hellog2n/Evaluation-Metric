@@ -7,7 +7,7 @@ import torchvision.transforms as transforms
 import pathlib
 import torch
 from PIL import Image
-
+import pandas as pd
 IMAGE_EXTENSIONS = {'bmp', 'jpg', 'jpeg', 'pgm', 'png', 'ppm',
                     'tif', 'tiff', 'webp'}
 
