@@ -104,8 +104,9 @@ if __name__ == '__main__':
     eval_dirs = [os.path.abspath(directory) for directory in args.eval_dirs]
     eval_embeddingsLists = []
 
-    feature_dim = 1000
-    nearest_k = 5
+    #feature_dim = 1000
+    #nearest_k = 5
+    nearest_k_list = [3, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 
     if args.verbose:
         print('computing inception embeddings for ' + ref_dir)
@@ -121,7 +122,8 @@ if __name__ == '__main__':
         eval_embeddingsLists.append(eval_embeddings)
         if args.verbose:
             print('computing PRDC')
-        print('Directory PRDC: ', directory, compute_prdc(real_features=real_embeddings,
+        for nearest_k in nearest_k_list:
+            print('Nearest K value is ',nearest_k, ' and Directory PRDC: ', directory, compute_prdc(real_features=real_embeddings,
                        fake_features=eval_embeddings,
                        nearest_k=nearest_k))
 
