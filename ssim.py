@@ -221,6 +221,9 @@ def ms_ssim(
         elif X.shape[-1] == 64:
             print('Image Size is ', X.shape[-2], 'X', X.shape[-1])
             weights = [0.0448, 0.2856, 0.3001, 0.1333]
+        elif X.shape[-1] == 128:
+            print('Image Size is ', X.shape[-2], 'X', X.shape[-1])
+            weights = [0.0448, 0.2856, 0.3001, 0.2363, 0.1333]
 
     else:
         if weights is None:
@@ -234,7 +237,7 @@ def ms_ssim(
     levels = weights.shape[0]
     mcs = []
     for i in range(levels):
-        if i == 3:
+        if i == levels-1:
             if win is None:
                 win_size = 5
                 win = _fspecial_gauss_1d(win_size, win_sigma)

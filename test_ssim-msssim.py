@@ -102,7 +102,7 @@ def get_MSSSIM_SSIM(X, Y):
     ssim_val = ssim(X, Y, data_range=255, size_average=True, win_size=win_size)  # return (N,)
     ms_ssim_val = ms_ssim(X, Y, data_range=255, size_average=True, win_size=win_size)  # (N,)
 
-    # set 'size_average=True' to get a scalar value as loss. see tests/tests_loss.py for more details
+    '''# set 'size_average=True' to get a scalar value as loss. see tests/tests_loss.py for more details
     ssim_loss = 1 - ssim(X, Y, data_range=255, size_average=True, win_size=win_size)  # return a scalar
     ms_ssim_loss = 1 - ms_ssim(X, Y, data_range=255, size_average=True, win_size=win_size)
 
@@ -111,7 +111,7 @@ def get_MSSSIM_SSIM(X, Y):
     ms_ssim_module = MS_SSIM(data_range=255, size_average=True, channel=3, win_size=win_size)
 
     ssim_loss = 1 - ssim_module(X, Y)
-    ms_ssim_loss = 1 - ms_ssim_module(X, Y)
+    ms_ssim_loss = 1 - ms_ssim_module(X, Y)'''
 
     return ssim_val, ms_ssim_val
 
